@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TJ37GFZKW2.com.telly.TellyiOS",
+        "paths": [
+          "/title",
+          "/profile",
+          "/person"
+        ]
+      }
+    ]
+  }
+}
