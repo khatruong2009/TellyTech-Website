@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telly</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+  <!-- Smart App Banner — app-argument is set by JS before first paint -->
+  <meta name="apple-itunes-app" content="app-id=6755705335" />
+
+  <!-- Open Graph (static defaults; dynamic content rendered in-page by JS) -->
+  <meta property="og:site_name" content="Telly" />
+  <meta property="og:type" content="profile" />
+  <meta property="og:title" content="View on Telly" />
+  <meta property="og:description" content="Open this person's filmography in the Telly app." />
+  <meta property="og:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="View on Telly" />
+  <meta name="twitter:description" content="Open this person's filmography in the Telly app." />
+  <meta name="twitter:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <link rel="stylesheet" href="/assets/pages.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <a href="/" class="logo-link" aria-label="Telly home">
+      <img src="/assets/telly_logo.png" alt="Telly" class="logo-img" />
+    </a>
+    <div id="content" style="width:100%;"></div>
+    <div id="ctas" style="width:100%;"></div>
+  </div>
+
+  <script>
+    (function () {
+      var TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1Yzk2MGQ0YTJiMGU3MGViNTNmNDU0ZGUyMGVmMTczYiIsIm5iZiI6MTU5NTI1ODQ5Ny4wMjQ5OTk5LCJzdWIiOiI1ZjE1YjY4MWVjYmRlOTAwMzY3ODJhYTkiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.6nxU-UqLE9OGp49ZbapMPWu9R4xWtodEeJcCco0YckA';
+      var APP_STORE_URL = 'https://apps.apple.com/app/telly/id6755705335';
+      var CURRENT_URL = window.location.href;
+
+      document.querySelector('meta[name="apple-itunes-app"]')
+        .setAttribute('content', 'app-id=6755705335, app-argument=' + CURRENT_URL);
+
+      var params = new URLSearchParams(window.location.search);
+      var personId = params.get('id');
+      var personName = params.get('name') || '';
+
+      var content = document.getElementById('content');
+      var ctas = document.getElementById('ctas');
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function renderCTAs() {
+        ctas.innerHTML =
+          '<a href="' + escapeHtml(CURRENT_URL) + '" class="btn-primary">Open in Telly</a>' +
+          '<a href="' + APP_STORE_URL + '" class="btn-secondary" target="_blank" rel="noopener">Get Telly on the App Store</a>';
+      }
+
+      function showLoading() {
+        content.innerHTML =
+          '<div class="person-card">' +
+            '<div class="headshot-wrap skeleton"></div>' +
+            '<div class="skeleton" style="height:1.4rem;width:55%;margin:1.125rem auto 0.35rem;border-radius:6px;"></div>' +
+            '<div class="skeleton" style="height:0.75rem;width:38%;margin:0 auto;border-radius:6px;"></div>' +
+          '</div>';
+        renderCTAs();
+      }
+
+      function render(data) {
+        var name = data.name || decodeURIComponent(personName) || 'Unknown';
+        var dept = data.known_for_department || '';
+        var headshotPath = data.profile_path;
+
+        document.title = name + ' on Telly';
+
+        var headshotHTML = headshotPath
+          ? '<img src="https://image.tmdb.org/t/p/w500' + headshotPath + '" alt="' + escapeHtml(name) + '" class="headshot-img" loading="lazy" />'
+          : '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="9" r="4" fill="#2e2e2e"/><path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"/></svg>';
+
+        content.innerHTML =
+          '<div class="person-card">' +
+            '<div class="headshot-wrap">' + headshotHTML + '</div>' +
+            '<div class="person-name">' + escapeHtml(name) + '</div>' +
+            (dept ? '<div class="person-sub">' + escapeHtml(dept) + '</div>' : '') +
+          '</div>';
+
+        renderCTAs();
+      }
+
+      // If no person ID, fall back to the name from the URL param without an API call
+      if (!personId || !/^\d+$/.test(personId)) {
+        render({ name: decodeURIComponent(personName) });
+        return;
+      }
+
+      showLoading();
+
+      fetch('https://api.themoviedb.org/3/person/' + encodeURIComponent(personId) + '?language=en-US', {
+        headers: { Authorization: 'Bearer ' + TMDB_TOKEN }
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(render)
+        .catch(function () {
+          // Degrade gracefully using the name from the URL
+          render({ name: decodeURIComponent(personName) });
+        });
+    }());
+  </script>
+</body>
+</html>

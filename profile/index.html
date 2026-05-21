@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telly</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+  <!-- Smart App Banner — app-argument is set by JS before first paint -->
+  <meta name="apple-itunes-app" content="app-id=6755705335" />
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Telly" />
+  <meta property="og:type" content="profile" />
+  <meta property="og:title" content="Telly User Profile" />
+  <meta property="og:description" content="View this user's watchlist and reviews in the Telly app." />
+  <meta property="og:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Telly User Profile" />
+  <meta name="twitter:description" content="View this user's watchlist and reviews in the Telly app." />
+  <meta name="twitter:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <link rel="stylesheet" href="/assets/pages.css" />
+  <style>
+    .profile-avatar {
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      background: #1c1a13;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <a href="/" class="logo-link" aria-label="Telly home">
+      <img src="/assets/telly_logo.png" alt="Telly" class="logo-img" />
+    </a>
+    <div id="content" style="width:100%;"></div>
+    <div id="ctas" style="width:100%;"></div>
+  </div>
+
+  <script>
+    (function () {
+      var APP_STORE_URL = 'https://apps.apple.com/app/telly/id6755705335';
+      var CURRENT_URL = window.location.href;
+
+      document.querySelector('meta[name="apple-itunes-app"]')
+        .setAttribute('content', 'app-id=6755705335, app-argument=' + CURRENT_URL);
+
+      var params = new URLSearchParams(window.location.search);
+      var userId = params.get('id') || '';
+
+      var content = document.getElementById('content');
+      var ctas = document.getElementById('ctas');
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // Derive initials from the user ID (first two characters, uppercased)
+      var initials = userId ? userId.slice(0, 2).toUpperCase() : 'TY';
+
+      content.innerHTML =
+        '<div class="person-card">' +
+          '<div class="profile-avatar" aria-hidden="true">' + escapeHtml(initials) + '</div>' +
+          '<div class="person-name">Telly User</div>' +
+          (userId ? '<div class="person-sub">' + escapeHtml(userId) + '</div>' : '') +
+          '<p style="font-size:0.82rem;color:var(--muted);margin-top:1rem;line-height:1.55;">' +
+            'Open the Telly app to view this user\'s profile, watchlist, and reviews.' +
+          '</p>' +
+        '</div>';
+
+      ctas.innerHTML =
+        '<a href="' + escapeHtml(CURRENT_URL) + '" class="btn-primary">Open in Telly</a>' +
+        '<a href="' + APP_STORE_URL + '" class="btn-secondary" target="_blank" rel="noopener">Get Telly on the App Store</a>';
+    }());
+  </script>
+</body>
+</html>

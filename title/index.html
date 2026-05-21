@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telly</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+  <!-- Smart App Banner — app-argument is set by JS before first paint -->
+  <meta name="apple-itunes-app" content="app-id=6755705335" />
+
+  <!-- Open Graph (static defaults; dynamic content rendered in-page by JS) -->
+  <meta property="og:site_name" content="Telly" />
+  <meta property="og:type" content="video.movie" />
+  <meta property="og:title" content="Watch on Telly" />
+  <meta property="og:description" content="Open this title in the Telly app to track, rate, and discover what to watch." />
+  <meta property="og:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Watch on Telly" />
+  <meta name="twitter:description" content="Open this title in the Telly app to track, rate, and discover what to watch." />
+  <meta name="twitter:image" content="https://tellytech.ai/assets/telly_logo.png" />
+
+  <link rel="stylesheet" href="/assets/pages.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <a href="/" class="logo-link" aria-label="Telly home">
+      <img src="/assets/telly_logo.png" alt="Telly" class="logo-img" />
+    </a>
+    <div id="content" style="width:100%;"></div>
+    <div id="ctas" style="width:100%;"></div>
+  </div>
+
+  <script>
+    (function () {
+      var TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1Yzk2MGQ0YTJiMGU3MGViNTNmNDU0ZGUyMGVmMTczYiIsIm5iZiI6MTU5NTI1ODQ5Ny4wMjQ5OTk5LCJzdWIiOiI1ZjE1YjY4MWVjYmRlOTAwMzY3ODJhYTkiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.6nxU-UqLE9OGp49ZbapMPWu9R4xWtodEeJcCco0YckA';
+      var APP_STORE_URL = 'https://apps.apple.com/app/telly/id6755705335';
+      var CURRENT_URL = window.location.href;
+
+      // Update Smart App Banner so iOS surfaces the native "Open" prompt
+      document.querySelector('meta[name="apple-itunes-app"]')
+        .setAttribute('content', 'app-id=6755705335, app-argument=' + CURRENT_URL);
+
+      var params = new URLSearchParams(window.location.search);
+      var tmdbId = params.get('tmdbId');
+      var type = (params.get('type') || 'movie').toLowerCase();
+      // normalise to match TMDB endpoint names
+      if (type !== 'tv') type = 'movie';
+
+      var content = document.getElementById('content');
+      var ctas = document.getElementById('ctas');
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function renderCTAs() {
+        ctas.innerHTML =
+          '<a href="' + escapeHtml(CURRENT_URL) + '" class="btn-primary">Open in Telly</a>' +
+          '<a href="' + APP_STORE_URL + '" class="btn-secondary" target="_blank" rel="noopener">Get Telly on the App Store</a>';
+      }
+
+      function showLoading() {
+        content.innerHTML =
+          '<div class="card">' +
+            '<div class="poster-wrap skeleton"></div>' +
+            '<div class="card-body">' +
+              '<div class="skeleton" style="height:1.3rem;width:65%;margin-bottom:0.5rem;"></div>' +
+              '<div class="skeleton" style="height:0.75rem;width:38%;margin-bottom:0.875rem;"></div>' +
+              '<div class="skeleton" style="height:0.8rem;width:100%;margin-bottom:0.35rem;"></div>' +
+              '<div class="skeleton" style="height:0.8rem;width:80%;margin-bottom:0.35rem;"></div>' +
+              '<div class="skeleton" style="height:0.8rem;width:90%;"></div>' +
+            '</div>' +
+          '</div>';
+        renderCTAs();
+      }
+
+      function showError() {
+        content.innerHTML =
+          '<div class="error-wrap">' +
+            '<div class="error-title">Could not load title</div>' +
+            '<div class="error-msg">Open in the Telly app for the full experience.</div>' +
+          '</div>';
+        renderCTAs();
+      }
+
+      function render(data) {
+        var title = data.title || data.name || 'Unknown Title';
+        var date = data.release_date || data.first_air_date || '';
+        var year = date ? date.slice(0, 4) : '';
+        var overview = data.overview || '';
+        var mediaLabel = type === 'tv' ? 'TV Series' : 'Movie';
+        var posterPath = data.poster_path;
+
+        document.title = title + ' on Telly';
+
+        var posterHTML = posterPath
+          ? '<img src="https://image.tmdb.org/t/p/w500' + posterPath + '" alt="' + escapeHtml(title) + ' poster" class="poster-img" loading="lazy" />'
+          : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="3" fill="#2a2a2a"/><path d="M8 5h8a2 2 0 012 2v10a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z" fill="#3a3a3a"/><circle cx="12" cy="12" r="2.5" fill="#4a4a4a"/></svg>';
+
+        var metaHTML = '';
+        if (year || mediaLabel) {
+          metaHTML = '<div class="card-meta">';
+          if (year) metaHTML += '<span>' + escapeHtml(year) + '</span>';
+          if (year && mediaLabel) metaHTML += '<span class="card-meta-dot"></span>';
+          if (mediaLabel) metaHTML += '<span>' + escapeHtml(mediaLabel) + '</span>';
+          metaHTML += '</div>';
+        }
+
+        content.innerHTML =
+          '<div class="card">' +
+            '<div class="poster-wrap">' + posterHTML + '</div>' +
+            '<div class="card-body">' +
+              '<div class="card-title">' + escapeHtml(title) + '</div>' +
+              metaHTML +
+              (overview ? '<div class="card-overview">' + escapeHtml(overview) + '</div>' : '') +
+            '</div>' +
+          '</div>';
+
+        renderCTAs();
+      }
+
+      if (!tmdbId || !/^\d+$/.test(tmdbId)) {
+        showError();
+        return;
+      }
+
+      showLoading();
+
+      var endpoint = type === 'tv'
+        ? 'https://api.themoviedb.org/3/tv/' + encodeURIComponent(tmdbId) + '?language=en-US'
+        : 'https://api.themoviedb.org/3/movie/' + encodeURIComponent(tmdbId) + '?language=en-US';
+
+      fetch(endpoint, {
+        headers: { Authorization: 'Bearer ' + TMDB_TOKEN }
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(render)
+        .catch(showError);
+    }());
+  </script>
+</body>
+</html>
